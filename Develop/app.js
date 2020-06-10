@@ -16,40 +16,88 @@ var id = 0;
 // Write code to use inquirer to gather information about the development team members,
 // and to create objects for each team member (using the correct classes as blueprints!)
 generateEmployee = () => {
-  inquirer.prompt([
-    {
-      name: "teamMember",
-      message: "Choose the role of the team member: ",
-      type: "list",
-      choice: ["Manager", "Engineer", "Intern"],
-    },
-    {
-      name: "memberName",
-      message: "Provide your full name: ",
-      type: "input",
-    },
-    {
-      name: "memberEmail",
-      message: "Provide your email address: ",
-      type: "input",
-    },
-    {
-      name: "github",
-      message: "Provide your username for GitHub: ",
-      type: "input",
-    },
-    {
-      name: "school",
-      message: "Provide your university name: ",
-      type: "input",
-    },
-    {
-      name: "officeNumber",
-      message: "Provide your office number: ",
-      type: "input",
-    },
-  ]);
+  inquirer
+    .prompt([
+      {
+        name: "teamMember",
+        message: "Choose the role of the team member: ",
+        type: "list",
+        choices: ["Manager", "Engineer", "Intern"],
+      },
+      {
+        name: "memberName",
+        message: "Provide your full name: ",
+        type: "input",
+      },
+      {
+        name: "memberEmail",
+        message: "Provide your email address: ",
+        type: "input",
+      },
+      {
+        name: "github",
+        message: "Provide your username for GitHub: ",
+        type: "input",
+        when: (answer) => answer.teamMember === "Engineer",
+      },
+      {
+        name: "school",
+        message: "Provide your university name: ",
+        type: "input",
+        when: (answer) => answer.teamMember === "Intern",
+      },
+      {
+        name: "officeNumber",
+        message: "Provide your office number: ",
+        type: "input",
+        when: (answer) => answer.teamMember === "Manager",
+      },
+    ])
+    .then((res) => {
+      if (res.teamMember === "Engineer") {
+        employeeList.push(
+          new Engineer(
+            res.memberName,
+            res.id,
+            res.memberEmail,
+            res.officeNumber
+          )
+        );
+        id++;
+      } else if (res.teamMember === "Intern") {
+        employeeList.push(
+          new Intern(res.memberName, res.id, res.memberEmail, res.school)
+        );
+        id++;
+      } else if (res.teamMember === "Manager") {
+        employeeList.push(
+          new Manager(res.memberName, res.id, res.memberEmail, res.officeNumber)
+        );
+        id++;
+      }
+      inquirer
+        .prompt({
+          name: "addMember",
+          message: "\nDo you want to add another teammate?",
+          type: "confirm",
+        })
+        .then((res) => {
+          if (res.addMember) {
+            generateEmployee();
+          } else {
+            fs.writeFile("team.html", render(employeeList), (err) => {
+              if (err) {
+                throw err;
+              } else {
+                console.log("Team Created!");
+              }
+            });
+          }
+        });
+    });
 };
+
+generateEmployee();
 
 // After the user has input all employees desired, call the `render` function (required
 // above) and pass in an array containing all employee objects; the `render` function will
